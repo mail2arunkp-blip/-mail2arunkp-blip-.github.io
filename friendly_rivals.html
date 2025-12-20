@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Friendly Rivals</title>
+  <style>
+    body {
+      margin: 0;
+      background: #111;
+      color: #fff;
+      font-family: system-ui, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      height: 100vh;
+      user-select: none;
+    }
+
+    h1 {
+      margin: 10px 0 0;
+      font-size: 28px;
+      text-align: center;
+    }
+
+    #subtitle {
+      font-size: 14px;
+      color: #ccc;
+      margin-bottom: 10px;
+    }
+
+    #gameContainer {
+      position: relative;
+      border: 3px solid #444;
+      background: radial-gradient(circle at center, #222, #000);
+      width: 800px;
+      height: 400px;
+      overflow: hidden;
+    }
+
+    #scoreboard {
+      display: flex;
+      justify-content: space-between;
+      width: 800px;
+      margin: 8px 0;
+      font-size: 14px;
+    }
+
+    .health-bar-container {
+      position: relative;
+      width: 38%;
+      height: 14px;
+      border-radius: 7px;
+      background: #333;
+      overflow: hidden;
+    }
+
+    .health-bar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 100%;
+      transition: width 0.15s;
+    }
+
+    #p1HealthBar {
+      background: linear-gradient(90deg, #4caf50, #8bc34a);
+    }
+
+    #p2HealthBar {
+      background: linear-gradient(90deg, #f44336, #ff9800);
+    }
+
+    .player-label {
+      font-size: 12px;
+      margin-bottom: 2px;
+    }
+
+    #centerInfo {
+      font-size: 14px;
+      text-align: center;
+      width: 24%;
+    }
+
+    #winnerMessage {
+      text-align: center;
+      margin-top: 6px;
+      height: 20px;
+      font-size: 16px;
+      color: #ffeb3b;
+    }
+
+    /* Player styles */
+    .player {
+      position: absolute;
+      width: 30px;
+      height: 60px;
+      border-radius: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+
+    #player1 {
+      left: 40px;
+      background: linear-gradient(180deg, #4caf50, #2e7d32);
+      box-shadow: 0 0 10px #4caf50;
+    }
+
+    #player2 {
+      right: 40px;
+      background: linear-gradient(180deg, #f44336, #b71c1c);
+      box-shadow: 0 0 10px #f44336;
+    }
+
+    .player-eye {
+      position: absolute;
+      top: 12px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #fff;
+    }
+
+    #p1Eye {
+      right: 4px;
+    }
+
+    #p2Eye {
+      left: 4px;
+    }
+
+    .player-mouth {
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 16px;
+      height: 6px;
+      border-radius: 3px;
+      background: #fff;
+    }
+
+    /* Bullet styles */
+    .bullet {
+      position: absolute;
+      width: 10px;
+      height: 4px;
+      border-radius: 2px;
+    }
+
+    .p1Bullet {
+      background: #8bc34a;
+      box-shadow: 0 0 8px #8bc34a;
+    }
+
+    .p2Bullet {
+      background: #ff9800;
+      box-shadow: 0 0 8px #ff9800;
+    }
+
+    /* Controls help */
+    #controls {
+      margin-top: 6px;
+      font-size: 13px;
+      color: #ddd;
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    #controls span.key {
+      display: inline-block;
+      padding: 2px 6px;
+      margin: 0 2px;
+      border-radius: 3px;
+      background: #333;
+      border: 1px solid #555;
+      font-family: monospace;
+      font-size: 12px;
+    }
+
+    #restartHint {
+      margin-top: 4px;
+      font-size: 13px;
+      color: #aaa;
+    }
+  </style>
+</head>
+<body>
+  <h1>Friendly Rivals</h1>
+  <div id="subtitle">Two-player happy blaster duel — first to 0 health loses</div>
+
+  <div id="scoreboard">
+    <div>
+      <div class="player-label">Player 1 (Left) — Move: W/S, Shoot: F</div>
+      <div class="health-bar-container">
+        <div id="p1HealthBar" class="health-bar"></div>
+      </div>
+    </div>
+    <div id="centerInfo">
+      Rounds are quick.<br />
+      Take turns and be nice.
+    </div>
+    <div style="text-align: right;">
+      <div class="player-label">Player 2 (Right) — Move: ↑/↓, Shoot: L</div>
+      <div class="health-bar-container" style="margin-left: auto;">
+        <div id="p2HealthBar" class="health-bar"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="gameContainer">
+    <div id="player1" class="player">
+      <div id="p1Eye" class="player-eye"></div>
+      <div class="player-mouth"></div>
+    </div>
+    <div id="player2" class="player">
+      <div id="p2Eye" class="player-eye"></div>
+      <div class="player-mouth"></div>
+    </div>
+  </div>
+
+  <div id="winnerMessage"></div>
+
+  <div id="controls">
+    <div>
+      <strong>Player 1:</strong> 
+      <span class="key">W</span> up 
+      <span class="key">S</span> down 
+      <span class="key">F</span> shoot
+    </div>
+    <div>
+      <strong>Player 2:</strong>
+      <span class="key">↑</span> up 
+      <span class="key">↓</span> down 
+      <span class="key">L</span> shoot
+    </div>
+  </div>
+
+  <div id="restartHint">Press <span class="key">R</span> to restart after a round.</div>
+
+  <script>
+    const gameContainer = document.getElementById("gameContainer");
+    const player1El = document.getElementById("player1");
+    const player2El = document.getElementById("player2");
+    const p1HealthBar = document.getElementById("p1HealthBar");
+    const p2HealthBar = document.getElementById("p2HealthBar");
+    const winnerMessage = document.getElementById("winnerMessage");
+
+    const gameWidth = 800;
+    const gameHeight = 400;
+    const playerSpeed = 4;
+    const bulletSpeed = 7;
+    const fireCooldown = 250; // milliseconds between shots
+    const damagePerHit = 10;
+
+    let p1 = {
+      x: 40,
+      y: gameHeight / 2 - 30,
+      width: 30,
+      height: 60,
+      health: 100,
+      lastShotTime: 0
+    };
+
+    let p2 = {
+      x: gameWidth - 40 - 30,
+      y: gameHeight / 2 - 30,
+      width: 30,
+      height: 60,
+      health: 100,
+      lastShotTime: 0
+    };
+
+    let bullets = [];
+    let keys = {};
+    let gameOver = false;
+
+    function resetGame() {
+      p1.y = gameHeight / 2 - p1.height / 2;
+      p2.y = gameHeight / 2 - p2.height / 2;
+      p1.health = 100;
+      p2.health = 100;
+      bullets.forEach(b => b.el.remove());
+      bullets = [];
+      gameOver = false;
+      winnerMessage.textContent = "";
+      updateHealthBars();
+      updatePlayerPositions();
+    }
+
+    function updateHealthBars() {
+      p1HealthBar.style.width = p1.health + "%";
+      p2HealthBar.style.width = p2.health + "%";
+    }
+
+    function updatePlayerPositions() {
+      player1El.style.left = p1.x + "px";
+      player1El.style.top = p1.y + "px";
+
+      player2El.style.left = p2.x + "px";
+      player2El.style.top = p2.y + "px";
+    }
+
+    function shoot(fromPlayer) {
+      const now = performance.now();
+      if (fromPlayer === 1) {
+        if (now - p1.lastShotTime < fireCooldown) return;
+        p1.lastShotTime = now;
+
+        const bulletEl = document.createElement("div");
+        bulletEl.className = "bullet p1Bullet";
+        const startX = p1.x + p1.width;
+        const startY = p1.y + p1.height / 2 - 2;
+        bulletEl.style.left = startX + "px";
+        bulletEl.style.top = startY + "px";
+        gameContainer.appendChild(bulletEl);
+
+        bullets.push({
+          el: bulletEl,
+          x: startX,
+          y: startY,
+          width: 10,
+          height: 4,
+          vx: bulletSpeed,
+          owner: 1
+        });
+      } else {
+        if (now - p2.lastShotTime < fireCooldown) return;
+        p2.lastShotTime = now;
+
+        const bulletEl = document.createElement("div");
+        bulletEl.className = "bullet p2Bullet";
+        const startX = p2.x - 10;
+        const startY = p2.y + p2.height / 2 - 2;
+        bulletEl.style.left = startX + "px";
+        bulletEl.style.top = startY + "px";
+        gameContainer.appendChild(bulletEl);
+
+        bullets.push({
+          el: bulletEl,
+          x: startX,
+          y: startY,
+          width: 10,
+          height: 4,
+          vx: -bulletSpeed,
+          owner: 2
+        });
+      }
+    }
+
+    function rectsOverlap(a, b) {
+      return !(
+        a.x + a.width < b.x ||
+        a.x > b.x + b.width ||
+        a.y + a.height < b.y ||
+        a.y > b.y + b.height
+      );
+    }
+
+    function update(dt) {
+      if (gameOver) return;
+
+      // Player 1 movement (W/S)
+      if (keys["w"]) {
+        p1.y -= playerSpeed;
+      }
+      if (keys["s"]) {
+        p1.y += playerSpeed;
+      }
+
+      // Player 2 movement (ArrowUp/ArrowDown)
+      if (keys["arrowup"]) {
+        p2.y -= playerSpeed;
+      }
+      if (keys["arrowdown"]) {
+        p2.y += playerSpeed;
+      }
+
+      // Clamp players to game area
+      p1.y = Math.max(0, Math.min(gameHeight - p1.height, p1.y));
+      p2.y = Math.max(0, Math.min(gameHeight - p2.height, p2.y));
+
+      // Shooting
+      if (keys["f"]) {
+        shoot(1);
+      }
+      if (keys["l"]) {
+        shoot(2);
+      }
+
+      // Update bullets
+      const bulletsToRemove = [];
+      bullets.forEach((b, index) => {
+        b.x += b.vx;
+        b.el.style.left = b.x + "px";
+
+        // Remove if off-screen
+        if (b.x < -20 || b.x > gameWidth + 20) {
+          bulletsToRemove.push(index);
+          return;
+        }
+
+        // Collision with players
+        const p1Rect = { x: p1.x, y: p1.y, width: p1.width, height: p1.height };
+        const p2Rect = { x: p2.x, y: p2.y, width: p2.width, height: p2.height };
+        const bRect = { x: b.x, y: b.y, width: b.width, height: b.height };
+
+        if (b.owner === 1 && rectsOverlap(bRect, p2Rect)) {
+          p2.health = Math.max(0, p2.health - damagePerHit);
+          bulletsToRemove.push(index);
+          b.el.remove();
+          updateHealthBars();
+          if (p2.health <= 0) {
+            endGame(1);
+          }
+        } else if (b.owner === 2 && rectsOverlap(bRect, p1Rect)) {
+          p1.health = Math.max(0, p1.health - damagePerHit);
+          bulletsToRemove.push(index);
+          b.el.remove();
+          updateHealthBars();
+          if (p1.health <= 0) {
+            endGame(2);
+          }
+        }
+      });
+
+      // Remove bullets (from end to start so indices stay valid)
+      bulletsToRemove.sort((a, b) => b - a).forEach(i => {
+        if (bullets[i] && bullets[i].el.isConnected) {
+          bullets[i].el.remove();
+        }
+        bullets.splice(i, 1);
+      });
+
+      updatePlayerPositions();
+    }
+
+    function endGame(winner) {
+      gameOver = true;
+      if (winner === 1) {
+        winnerMessage.textContent = "Player 1 wins this round! Press R to play again.";
+      } else {
+        winnerMessage.textContent = "Player 2 wins this round! Press R to play again.";
+      }
+    }
+
+    // Game loop
+    let lastTime = null;
+    function gameLoop(timestamp) {
+      if (!lastTime) lastTime = timestamp;
+      const dt = timestamp - lastTime;
+      lastTime = timestamp;
+      update(dt);
+      requestAnimationFrame(gameLoop);
+    }
+    requestAnimationFrame(gameLoop);
+
+    // Keyboard handling
+    window.addEventListener("keydown", (e) => {
+      const key = e.key.toLowerCase();
+      keys[key] = true;
+
+      if (key === "r") {
+        resetGame();
+      }
+    });
+
+    window.addEventListener("keyup", (e) => {
+      const key = e.key.toLowerCase();
+      keys[key] = false;
+    });
+
+    // Initial setup
+    resetGame();
+  </script>
+</body>
+</html>
